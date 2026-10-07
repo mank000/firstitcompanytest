@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .forms import ReceiptForm
@@ -96,8 +97,9 @@ def register(request):
     )
 
 
-@login_required
+@csrf_exempt
 @require_GET
+@login_required
 def receipt_api(request):
     if request.GET:
         return JsonResponse({"error": "Неизвестные параметры запроса."}, status=400)
