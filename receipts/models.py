@@ -8,23 +8,25 @@ class Receipt(models.Model):
         ACCEPTED = "accepted", "Принят"
         REJECTED = "rejected", "Отклонен"
 
-    fn = models.CharField(max_length=32)
-    fd = models.CharField(max_length=32)
-    fp = models.CharField(max_length=32)
+    fn = models.CharField("ФН", max_length=32)
+    fd = models.CharField("ФД", max_length=32)
+    fp = models.CharField("ФП", max_length=32)
 
-    purchase_at = models.DateTimeField()
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    purchase_at = models.DateTimeField("Дата и время покупки")
+    amount = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
 
     status = models.CharField(
+        "Статус",
         max_length=16,
         choices=Status.choices,
         default=Status.PENDING,
     )
 
-    rejection_reason = models.TextField(blank=True)
+    rejection_reason = models.TextField("Причина отказа", blank=True)
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        verbose_name="Пользователь",
         on_delete=models.CASCADE,
         related_name="receipts",
     )
@@ -38,6 +40,8 @@ class Receipt(models.Model):
                 name="unique_receipt",
             )
         ]
+        verbose_name = "Чек"
+        verbose_name_plural = "Чеки"
 
     def __str__(self):
         return f"{self.fn}/{self.fd}/{self.fp}"

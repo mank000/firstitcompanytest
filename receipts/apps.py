@@ -2,4 +2,5 @@ from django.apps import AppConfig
 
 
 class ReceiptsConfig(AppConfig):
-    name = 'receipts'
+    name = "receipts"
+    verbose_name = "Чеки"
