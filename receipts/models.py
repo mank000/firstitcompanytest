@@ -31,7 +31,7 @@ class Receipt(models.Model):
         related_name="receipts",
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField("Дата регистрации", auto_now_add=True)
 
     class Meta:
         constraints = [

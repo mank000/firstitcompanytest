@@ -2,31 +2,45 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator
+from django.db import IntegrityError, transaction
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
 
 from .forms import ReceiptForm
 from .models import Receipt
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def create_receipt(request):
     if request.method == "POST":
         form = ReceiptForm(request.POST)
 
         if form.is_valid():
             receipt = form.save(commit=False)
-
             receipt.user = request.user
             receipt.status = Receipt.Status.PENDING
+            try:
+                with transaction.atomic():
+                    receipt.save()
+            except IntegrityError:
+                form.add_error(None, "Этот чек уже зарегистрирован.")
+            else:
+                return JsonResponse(
+                    {"success": True, "message": "Чек успешно зарегистрирован."},
+                    status=201,
+                )
 
-            receipt.save()
+        return JsonResponse(
+            {
+                "success": False,
+                "errors": form.errors.get_json_data(),
+            },
+            status=400,
+        )
 
-            return redirect("receipts:list")
-
-    else:
-        form = ReceiptForm()
+    form = ReceiptForm()
 
     return render(
         request,
@@ -38,15 +52,8 @@ def create_receipt(request):
 @login_required
 @require_GET
 def receipt_list(request):
-    user_id = request.GET.get("user")
-
-    if user_id is not None and str(request.user.pk) != user_id:
-        return JsonResponse(
-            {"error": "Нельзя просматривать чеки другого пользователя."},
-            status=403,
-        )
     receipts = Receipt.objects.filter(user=request.user).order_by(
-        "-created_at"
+        "-created_at", "-pk"
     )
 
     paginator = Paginator(receipts, 10)
@@ -85,9 +92,13 @@ def register(request):
 
 
 @login_required
+@require_GET
 def receipt_api(request):
+    if request.GET:
+        return JsonResponse({"error": "Неизвестные параметры запроса."}, status=400)
+
     receipts = Receipt.objects.filter(user=request.user).order_by(
-        "-created_at"
+        "-created_at", "-pk"
     )
 
     data = [
