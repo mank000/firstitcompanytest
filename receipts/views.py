@@ -32,6 +32,7 @@ def create_receipt(request):
                 return JsonResponse(
                     {"success": True, "message": "Чек успешно зарегистрирован."},
                     status=201,
+                    json_dumps_params={"ensure_ascii": False},
                 )
 
         return JsonResponse(
@@ -40,6 +41,7 @@ def create_receipt(request):
                 "errors": form.errors.get_json_data(),
             },
             status=400,
+            json_dumps_params={"ensure_ascii": False},
         )
 
     form = ReceiptForm()
@@ -102,7 +104,11 @@ def register(request):
 @login_required
 def receipt_api(request):
     if request.GET:
-        return JsonResponse({"error": "Неизвестные параметры запроса."}, status=400)
+        return JsonResponse(
+            {"error": "Неизвестные параметры запроса."},
+            status=400,
+            json_dumps_params={"ensure_ascii": False},
+        )
 
     receipts = Receipt.objects.filter(user=request.user).order_by(
         "-created_at", "-pk"
@@ -124,4 +130,4 @@ def receipt_api(request):
         for receipt in receipts
     ]
 
-    return JsonResponse(data, safe=False)
+    return JsonResponse(data, safe=False, json_dumps_params={"ensure_ascii": False})

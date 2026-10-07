@@ -101,9 +101,11 @@ class ReceiptTests(TestCase):
         response = self.client.get(reverse("receipts:api"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual([item["id"] for item in response.json()], [own.pk])
+        self.assertIn("На проверке", response.content.decode())
 
         response = self.client.get(reverse("receipts:api"), {"user": self.other.pk})
         self.assertEqual(response.status_code, 400)
+        self.assertIn("Неизвестные параметры запроса", response.content.decode())
 
     def test_api_is_read_only(self):
         strict_client = Client(enforce_csrf_checks=True)
