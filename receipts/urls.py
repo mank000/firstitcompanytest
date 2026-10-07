@@ -8,4 +8,5 @@ urlpatterns = [
     path("", views.receipt_list, name="list"),
     path("new/", views.create_receipt, name="create"),
     path("register/", views.register, name="register"),
+    path("api/receipts/", views.receipt_api, name="api"),
 ]
