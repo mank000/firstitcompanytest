@@ -20,9 +20,17 @@ class ReceiptForm(forms.ModelForm):
             "amount",
         )
         widgets = {
+            "fn": forms.TextInput(attrs={"placeholder": "Введите ФН", "inputmode": "numeric"}),
+            "fd": forms.TextInput(
+                attrs={"placeholder": "Введите номер чека (ФД)", "inputmode": "numeric"}
+            ),
+            "fp": forms.TextInput(attrs={"placeholder": "Введите ФП", "inputmode": "numeric"}),
             "purchase_at": forms.DateTimeInput(
                 attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
-            )
+            ),
+            "amount": forms.NumberInput(
+                attrs={"placeholder": "0.00 ₽", "min": "0", "step": "0.01"}
+            ),
         }
 
     def _clean_digits(self, field):
@@ -52,11 +60,7 @@ class ReceiptForm(forms.ModelForm):
         purchase_at = self.cleaned_data["purchase_at"]
         purchase_date = timezone.localtime(purchase_at).date()
 
-        if not (
-            settings.PROMO_START_DATE
-            <= purchase_date
-            <= settings.PROMO_END_DATE
-        ):
+        if not (settings.PROMO_START_DATE <= purchase_date <= settings.PROMO_END_DATE):
             raise ValidationError("Дата покупки не входит в период акции.")
 
         return purchase_at

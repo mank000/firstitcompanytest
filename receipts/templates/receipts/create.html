@@ -1,24 +1,37 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Регистрация чека</title>
-</head>
-<body>
-    <h1>Регистрация чека</h1>
+{% extends "base.html" %}
+{% load static %}
 
-    <form method="post">
-        {% csrf_token %}
+{% block title %}Регистрация чека{% endblock %}
 
-        {{ form.as_p }}
+{% block content %}
+<section class="form-card" aria-labelledby="form-title">
+    <div id="form-content">
+        <a class="close-link" href="{% url 'receipts:list' %}" aria-label="Вернуться к моим чекам">×</a>
+        <h1 id="form-title">Регистрация чека</h1>
+        <p class="form-intro">Введите необходимые данные с чека</p>
+        <p class="promo-period">Период акции: {{ promo_start|date:"d.m.Y" }} — {{ promo_end|date:"d.m.Y" }}</p>
 
-        <button type="submit">
-            Зарегистрировать чек
-        </button>
-    </form>
+        <form method="post" id="receipt-form" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="field">
+                    <label for="{{ field.id_for_label }}">{% if field.name == "fd" %}Номер чека (ФД){% else %}{{ field.label }}{% endif %}</label>
+                    {{ field }}
+                    <p class="field-error" id="error-{{ field.name }}" data-error-for="{{ field.name }}" aria-live="polite"></p>
+                </div>
+            {% endfor %}
 
-    <a href="{% url 'receipts:list' %}">
-        Мои чеки
-    </a>
-</body>
-</html>
+            <p class="form-message error" id="form-error" role="alert" hidden></p>
+            <button class="button" type="submit">Зарегистрировать чек</button>
+        </form>
+    </div>
+
+    <div class="success-panel" id="success-panel" role="status" hidden>
+        <span class="success-icon" aria-hidden="true">✓</span>
+        <h1>Ваш чек загружен</h1>
+        <p>Мы начали проверять вашу покупку. Статус чека появится в личном кабинете.</p>
+        <a class="button" href="{% url 'receipts:list' %}">На главную</a>
+    </div>
+</section>
+<script src="{% static 'receipts/form.js' %}" defer></script>
+{% endblock %}

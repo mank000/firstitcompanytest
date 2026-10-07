@@ -1,33 +1,60 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Мои чеки</title>
-</head>
-<body>
-    <h1>Мои чеки</h1>
+{% extends "base.html" %}
 
-    <a href="{% url 'receipts:create' %}">
-        Зарегистрировать чек
-    </a>
+{% block title %}Мои чеки{% endblock %}
 
-    {% for receipt in page %}
-        <div>
-            <p>
-                {{ receipt.purchase_at }}
-                — {{ receipt.amount }} руб
-                — {{ receipt.get_status_display }}
-            </p>
+{% block content %}
+<section class="history-card">
+    <div class="history-heading">
+        <h1>История чеков</h1>
+        <span class="receipt-count">Чеков внесено: <strong>{{ page.paginator.count }} шт.</strong></span>
+    </div>
 
-            {% if receipt.rejection_reason %}
-                <p>
-                    Причина отказа:
-                    {{ receipt.rejection_reason }}
-                </p>
-            {% endif %}
+    {% if page %}
+        <div class="table-scroll">
+            <table class="receipt-table">
+                <thead>
+                    <tr>
+                        <th>Дата покупки</th>
+                        <th>Статус</th>
+                        <th>Сумма чека</th>
+                        <th>Дата регистрации</th>
+                        <th>Информация</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for receipt in page %}
+                        <tr>
+                            <td data-label="Дата покупки">{{ receipt.purchase_at|date:"H:i d.m.Y" }}</td>
+                            <td data-label="Статус"><span class="status status-{{ receipt.status }}">{{ receipt.get_status_display }}</span></td>
+                            <td data-label="Сумма чека">{{ receipt.amount }} ₽</td>
+                            <td data-label="Дата регистрации">{{ receipt.created_at|date:"H:i d.m.Y" }}</td>
+                            <td data-label="Информация">
+                                {% if receipt.rejection_reason %}{{ receipt.rejection_reason }}{% elif receipt.status == "pending" %}Чек на проверке{% else %}Чек принят{% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    {% empty %}
-        <p>Чеков пока нет.</p>
-    {% endfor %}
-</body>
-</html>
+
+        {% if page.paginator.num_pages > 1 %}
+            <nav class="pagination" aria-label="Страницы чеков">
+                {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">← Назад</a>{% endif %}
+                <span>Страница {{ page.number }} из {{ page.paginator.num_pages }}</span>
+                {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Вперёд →</a>{% endif %}
+            </nav>
+        {% endif %}
+        <div class="history-footer">
+            <p class="hint">Иногда проверка чека может занять до 5 рабочих дней</p>
+            <a class="button" href="{% url 'receipts:create' %}">Зарегистрировать чек</a>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon" aria-hidden="true">▤</div>
+            <h2>Здесь будет история ваших чеков</h2>
+            <p>Вы не добавили еще ни одного чека</p>
+            <a class="button" href="{% url 'receipts:create' %}">Зарегистрировать чек</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
@@ -45,7 +46,11 @@ def create_receipt(request):
     return render(
         request,
         "receipts/create.html",
-        {"form": form},
+        {
+            "form": form,
+            "promo_start": settings.PROMO_START_DATE,
+            "promo_end": settings.PROMO_END_DATE,
+        },
     )
 
 
