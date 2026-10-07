@@ -86,3 +86,6 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+
+PROMO_START_DATE = os.environ.get("PROMO_START_DATE")
+PROMO_END_DATE = os.environ.get("PROMO_END_DATE")
