@@ -1,4 +1,5 @@
 import os
+from datetime import date
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -87,5 +88,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-PROMO_START_DATE = os.environ.get("PROMO_START_DATE")
-PROMO_END_DATE = os.environ.get("PROMO_END_DATE")
+PROMO_START_DATE = date.fromisoformat(os.environ["PROMO_START_DATE"])
+
+PROMO_END_DATE = date.fromisoformat(os.environ["PROMO_END_DATE"])
+
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"

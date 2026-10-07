@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация чека</title>
+</head>
+<body>
+    <h1>Регистрация чека</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            Зарегистрировать чек
+        </button>
+    </form>
+
+    <a href="{% url 'receipts:list' %}">
+        Мои чеки
+    </a>
+</body>
+</html>
