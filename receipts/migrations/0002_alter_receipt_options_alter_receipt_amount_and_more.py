@@ -6,60 +6,73 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('receipts', '0001_initial'),
+        ("receipts", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='receipt',
-            options={'verbose_name': 'Чек', 'verbose_name_plural': 'Чеки'},
+            name="receipt",
+            options={"verbose_name": "Чек", "verbose_name_plural": "Чеки"},
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='amount',
-            field=models.DecimalField(decimal_places=2, max_digits=10, verbose_name='Сумма'),
+            model_name="receipt",
+            name="amount",
+            field=models.DecimalField(decimal_places=2, max_digits=10, verbose_name="Сумма"),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, verbose_name='Дата регистрации'),
+            model_name="receipt",
+            name="created_at",
+            field=models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации"),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='fd',
-            field=models.CharField(max_length=32, verbose_name='ФД'),
+            model_name="receipt",
+            name="fd",
+            field=models.CharField(max_length=32, verbose_name="ФД"),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='fn',
-            field=models.CharField(max_length=32, verbose_name='ФН'),
+            model_name="receipt",
+            name="fn",
+            field=models.CharField(max_length=32, verbose_name="ФН"),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='fp',
-            field=models.CharField(max_length=32, verbose_name='ФП'),
+            model_name="receipt",
+            name="fp",
+            field=models.CharField(max_length=32, verbose_name="ФП"),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='purchase_at',
-            field=models.DateTimeField(verbose_name='Дата и время покупки'),
+            model_name="receipt",
+            name="purchase_at",
+            field=models.DateTimeField(verbose_name="Дата и время покупки"),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='rejection_reason',
-            field=models.TextField(blank=True, verbose_name='Причина отказа'),
+            model_name="receipt",
+            name="rejection_reason",
+            field=models.TextField(blank=True, verbose_name="Причина отказа"),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='status',
-            field=models.CharField(choices=[('pending', 'На проверке'), ('accepted', 'Принят'), ('rejected', 'Отклонен')], default='pending', max_length=16, verbose_name='Статус'),
+            model_name="receipt",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "На проверке"),
+                    ("accepted", "Принят"),
+                    ("rejected", "Отклонен"),
+                ],
+                default="pending",
+                max_length=16,
+                verbose_name="Статус",
+            ),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='receipts', to=settings.AUTH_USER_MODEL, verbose_name='Пользователь'),
+            model_name="receipt",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="receipts",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Пользователь",
+            ),
         ),
     ]
