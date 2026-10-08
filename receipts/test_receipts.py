@@ -109,9 +109,12 @@ class ReceiptTests(TestCase):
         self.assertEqual(len(response.context["page"]), 10)
         self.assertEqual(response.context["page"].paginator.count, 11)
         self.assertTrue(all(receipt.user == self.user for receipt in response.context["page"]))
+        self.assertContains(response, 'aria-current="page">1</span>')
+        self.assertContains(response, 'aria-label="Страница 2"')
 
         second_page = self.client.get(reverse("receipts:list"), {"page": 2})
         self.assertEqual(len(second_page.context["page"]), 1)
+        self.assertContains(second_page, 'aria-current="page">2</span>')
 
     def test_list_sorting_and_pagination(self):
         for index in range(12):

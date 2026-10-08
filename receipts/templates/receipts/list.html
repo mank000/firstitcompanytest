@@ -45,9 +45,25 @@
 
         {% if page.paginator.num_pages > 1 %}
             <nav class="pagination" aria-label="Страницы чеков">
-                {% if page.has_previous %}<a href="{{ page_prefix }}page={{ page.previous_page_number }}">← Назад</a>{% endif %}
-                <span>Страница {{ page.number }} из {{ page.paginator.num_pages }}</span>
-                {% if page.has_next %}<a href="{{ page_prefix }}page={{ page.next_page_number }}">Вперёд →</a>{% endif %}
+                {% if page.has_previous %}
+                    <a class="page-arrow" href="{{ page_prefix }}page={{ page.previous_page_number }}" aria-label="Предыдущая страница">‹</a>
+                {% else %}
+                    <span class="page-arrow is-disabled" aria-hidden="true">‹</span>
+                {% endif %}
+                {% for number in page_numbers %}
+                    {% if number == ellipsis %}
+                        <span class="page-ellipsis" aria-hidden="true">...</span>
+                    {% elif number == page.number %}
+                        <span class="page-number is-current" aria-current="page">{{ number }}</span>
+                    {% else %}
+                        <a class="page-number" href="{{ page_prefix }}page={{ number }}" aria-label="Страница {{ number }}">{{ number }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if page.has_next %}
+                    <a class="page-arrow" href="{{ page_prefix }}page={{ page.next_page_number }}" aria-label="Следующая страница">›</a>
+                {% else %}
+                    <span class="page-arrow is-disabled" aria-hidden="true">›</span>
+                {% endif %}
             </nav>
         {% endif %}
         <div class="history-footer">

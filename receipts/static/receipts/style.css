@@ -150,8 +150,14 @@ h1 { font-size: 26px; letter-spacing: -.02em; }
 .status-pending { color: #b78c00; background: #fff5d8; }
 .status-accepted { color: #17a526; background: #dff8e1; }
 .status-rejected { color: #e74652; background: #ffe7e9; }
-.pagination { display: flex; justify-content: center; gap: 18px; padding: 24px 0; font-size: 13px; }
-.pagination a { color: #514bef; text-decoration: none; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 4px; max-width: 100%; padding: 24px 0; overflow-x: auto; font-size: 14px; }
+.pagination a { color: inherit; text-decoration: none; }
+.page-number, .page-arrow, .page-ellipsis { display: inline-flex; flex: none; align-items: center; justify-content: center; min-width: 40px; height: 40px; border-radius: 8px; }
+.page-number:hover, .page-arrow:hover { background: #f1f3f7; }
+.page-number.is-current { background: #514bef; color: #fff; }
+.page-arrow { color: #66708a; font-size: 26px; line-height: 1; }
+.page-arrow.is-disabled { opacity: .45; }
+.page-ellipsis { min-width: 25px; }
 .history-footer { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-top: 25px; }
 .hint { margin: 0; padding: 11px 13px; border: 1px solid #dfe2ff; border-radius: 8px; color: #66708a; background: #f3f3ff; font-size: 13px; }
 .empty-state { padding: 40px 0 25px; text-align: center; }

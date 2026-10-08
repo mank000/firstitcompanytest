@@ -101,6 +101,7 @@ def receipt_list(request):
 
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
+    page_numbers = paginator.get_elided_page_range(page.number, on_each_side=3, on_ends=1)
     page_prefix = f"?sort={sort}&" if sort != "registered_desc" else "?"
 
     return render(
@@ -108,6 +109,8 @@ def receipt_list(request):
         "receipts/list.html",
         {
             "page": page,
+            "page_numbers": page_numbers,
+            "ellipsis": paginator.ELLIPSIS,
             "sort_headers": sort_headers,
             "page_prefix": page_prefix,
         },
