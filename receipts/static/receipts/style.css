@@ -91,10 +91,52 @@ h1 { font-size: 26px; letter-spacing: -.02em; }
 }
 .field input::placeholder { color: #a7b1c4; }
 .field input:focus, .auth-card input:focus { border-color: #514bef; }
-.field input.invalid { border-color: #ff626b; }
-.field-error { margin: 4px 0 0; color: #e94651; font-size: 12px; }
+.field input.invalid, .field input.invalid:focus { border-color: #ff525d; }
+.field-error {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 100%;
+    margin: 11px 0 0;
+    padding: 7px 9px;
+    border: 1px solid #ff525d;
+    border-radius: 7px;
+    color: #f04450;
+    background: #fff;
+    font-size: 12px;
+    line-height: 1.3;
+}
+.field-error::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 14px;
+    width: 10px;
+    height: 10px;
+    transform: rotate(45deg);
+    border-top: 1px solid #ff525d;
+    border-left: 1px solid #ff525d;
+    background: #fff;
+}
+.field-error::after {
+    content: "!";
+    display: grid;
+    flex: none;
+    order: -1;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    padding-top: 3px;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    color: #fff;
+    background: #f04450;
+    font-size: 10px;
+    font-weight: 700;
+}
 .field-hint { margin: 5px 0 0; color: #75819a; font-size: 11px; line-height: 1.35; }
 .field-error:empty { display: none; }
+.field.has-error .field-hint { display: none; }
 .qr-scan { margin-bottom: 15px; }
 .scan-button, .scan-cancel {
     width: 100%;
@@ -112,7 +154,7 @@ h1 { font-size: 26px; letter-spacing: -.02em; }
 .scan-message { margin: 8px 0 0; color: #4b5563; font-size: 12px; line-height: 1.4; }
 .form-card .button { width: 100%; margin-top: 7px; }
 .form-message { margin: 12px 0; padding: 10px; border-radius: 8px; font-size: 13px; }
-.form-message.error { color: #c32732; background: #fff0f1; }
+.form-message.error { border: 1px solid #ff525d; color: #f04450; background: #fff; }
 .success-panel { padding: 35px 0; text-align: center; }
 .success-panel h1 { margin: 20px 0 7px; }
 .success-panel p { color: #75819a; font-size: 14px; line-height: 1.5; }

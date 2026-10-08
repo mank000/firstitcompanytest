@@ -68,7 +68,9 @@ if (scanButton) {
             const input = scanForm.elements[name];
             input.value = value;
             input.classList.remove("invalid");
+            input.closest(".field")?.classList.remove("has-error");
             input.setAttribute("aria-invalid", "false");
+            input.removeAttribute("aria-describedby");
             const error = document.querySelector(`[data-error-for="${name}"]`);
             if (error) error.textContent = "";
         }

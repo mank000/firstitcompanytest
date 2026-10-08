@@ -8,10 +8,13 @@ if (form) {
         const input = form.elements[name];
         const error = document.querySelector(`[data-error-for="${name}"]`);
         if (!input || !error) return;
+        const hasError = Boolean(message);
         error.textContent = message;
-        input.classList.toggle("invalid", Boolean(message));
-        input.setAttribute("aria-invalid", String(Boolean(message)));
-        input.setAttribute("aria-describedby", error.id);
+        input.classList.toggle("invalid", hasError);
+        input.closest(".field").classList.toggle("has-error", hasError);
+        input.setAttribute("aria-invalid", String(hasError));
+        if (hasError) input.setAttribute("aria-describedby", error.id);
+        else input.removeAttribute("aria-describedby");
     }
 
     function clearErrors() {
