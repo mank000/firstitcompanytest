@@ -13,6 +13,14 @@
 
         <form method="post" id="receipt-form" novalidate>
             {% csrf_token %}
+            <div class="qr-scan">
+                <button class="scan-button" id="scan-qr" type="button">Сканировать QR-код чека</button>
+                <div class="scan-panel" id="scan-panel" hidden>
+                    <video id="scan-video" aria-label="Изображение с камеры" autoplay muted playsinline></video>
+                    <button class="scan-cancel" id="stop-scan" type="button">Закрыть камеру</button>
+                </div>
+                <p class="scan-message" id="scan-message" role="status" aria-live="polite" hidden></p>
+            </div>
             {% for field in form %}
                 <div class="field">
                     <label for="{{ field.id_for_label }}">{% if field.name == "fd" %}Номер чека (ФД){% else %}{{ field.label }}{% endif %}</label>
@@ -35,4 +43,5 @@
     </div>
 </section>
 <script src="{% static 'receipts/form.js' %}" defer></script>
+<script src="{% static 'receipts/scanner.js' %}" defer></script>
 {% endblock %}
