@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<section class="info-card">
+    <h1>Профиль</h1>
+    <p><strong>Пользователь:</strong> {{ user.username }}</p>
+    {% if user.email %}<p><strong>Почта:</strong> {{ user.email }}</p>{% endif %}
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="button" type="submit">Выйти</button>
+    </form>
+</section>
+{% endblock %}

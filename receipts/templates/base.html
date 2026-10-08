@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Чек на удачу{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'receipts/style.css' %}?v=4">
+    <link rel="stylesheet" href="{% static 'receipts/style.css' %}?v=6">
 </head>
 <body>
     <header class="site-header">
@@ -13,25 +13,22 @@
             <a class="brand" href="{% url 'receipts:list' %}">Чек на удачу</a>
             <nav class="header-nav" aria-label="Основная навигация">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'receipts:list' %}"{% if request.resolver_match.url_name == 'list' %} class="active" aria-current="page"{% endif %}>Личный кабинет</a>
-                    <a href="{% url 'receipts:create' %}"{% if request.resolver_match.url_name == 'create' %} class="active" aria-current="page"{% endif %}>Зарегистрировать чек</a>
+                    <a href="{% url 'receipts:list' %}"{% if request.resolver_match.url_name == 'list' or request.resolver_match.url_name == 'create' %} class="active"{% if request.resolver_match.url_name == 'list' %} aria-current="page"{% endif %}{% endif %}>Личный кабинет</a>
+                    <a href="{% url 'receipts:rules' %}"{% if request.resolver_match.url_name == 'rules' %} class="active" aria-current="page"{% endif %}>Правила</a>
+                    <a href="{% url 'receipts:profile' %}"{% if request.resolver_match.url_name == 'profile' %} class="active" aria-current="page"{% endif %}>Профиль</a>
                 {% else %}
                     <a href="{% url 'login' %}">Войти</a>
                     <a href="{% url 'receipts:register' %}">Регистрация</a>
                 {% endif %}
             </nav>
             {% if user.is_authenticated %}
-                <div class="header-profile">
+                <a class="header-profile" href="{% url 'receipts:profile' %}" aria-label="Открыть профиль">
                     <span class="profile-avatar" aria-hidden="true">{{ user.username|first|upper }}</span>
                     <span class="profile-details">
                         <strong>{{ user.get_full_name|default:user.username }}</strong>
                         <small>{% if user.email %}{{ user.email }}{% else %}Участник акции{% endif %}</small>
                     </span>
-                    <form method="post" action="{% url 'logout' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="nav-button">Выйти</button>
-                    </form>
-                </div>
+                </a>
             {% endif %}
         </div>
     </header>

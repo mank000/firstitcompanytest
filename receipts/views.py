@@ -119,6 +119,25 @@ def receipt_list(request):
 
 @login_required
 @require_GET
+def rules(request):
+    return render(
+        request,
+        "receipts/rules.html",
+        {
+            "promo_start": settings.PROMO_START_DATE,
+            "promo_end": settings.PROMO_END_DATE,
+        },
+    )
+
+
+@login_required
+@require_GET
+def profile(request):
+    return render(request, "receipts/profile.html")
+
+
+@login_required
+@require_GET
 def receipt_qr(request, receipt_id):
     if request.user.has_perm("receipts.view_receipt") or request.user.has_perm(
         "receipts.change_receipt"
