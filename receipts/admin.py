@@ -180,7 +180,9 @@ admin.site.unregister(User)
 class UserAdmin(BaseUserAdmin):
     readonly_fields = (*BaseUserAdmin.readonly_fields, "accepted_receipts_csv")
     fieldsets = (
-        *BaseUserAdmin.fieldsets,
+        (None, {"fields": ("username", "password")}),
+        ("Личные данные", {"fields": ("first_name", "last_name", "email")}),
+        ("Доступ", {"fields": ("is_active", "is_staff", "is_superuser")}),
         ("Чеки", {"fields": ("accepted_receipts_csv",)}),
     )
 

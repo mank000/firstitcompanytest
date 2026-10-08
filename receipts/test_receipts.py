@@ -225,6 +225,9 @@ class ReceiptTests(TestCase):
 
         user_page = self.client.get(reverse("admin:auth_user_change", args=[self.user.pk]))
         self.assertContains(user_page, "Скачать CSV")
+        self.assertContains(user_page, "Доступ")
+        self.assertNotContains(user_page, 'id="id_groups"')
+        self.assertNotContains(user_page, 'id="id_user_permissions"')
         response = self.client.get(
             reverse("admin:receipts_receipt_export_user_csv", args=[self.user.pk])
         )
