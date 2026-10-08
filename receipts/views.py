@@ -4,13 +4,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.db.models import Case, IntegerField, When
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .forms import ReceiptForm
 from .models import Receipt
+from .qr import receipt_qr_svg
 
 
 @login_required
@@ -60,20 +62,70 @@ def create_receipt(request):
 @login_required
 @require_GET
 def receipt_list(request):
-    receipts = Receipt.objects.filter(user=request.user).order_by(
-        "-created_at", "-pk"
-    )
+    sort_fields = {
+        "purchase_asc": ("purchase_date", "purchase_time", "pk"),
+        "purchase_desc": ("-purchase_date", "-purchase_time", "-pk"),
+        "status_asc": ("status_order", "-created_at", "-pk"),
+        "status_desc": ("-status_order", "-created_at", "-pk"),
+        "amount_asc": ("amount", "-created_at", "-pk"),
+        "amount_desc": ("-amount", "-created_at", "-pk"),
+        "registered_asc": ("created_at", "pk"),
+        "registered_desc": ("-created_at", "-pk"),
+    }
+    sort = request.GET.get("sort", "registered_desc")
+    if sort not in sort_fields:
+        sort = "registered_desc"
+
+    receipts = Receipt.objects.filter(user=request.user)
+    if sort.startswith("status_"):
+        receipts = receipts.annotate(
+            status_order=Case(
+                When(status=Receipt.Status.PENDING, then=0),
+                When(status=Receipt.Status.ACCEPTED, then=1),
+                When(status=Receipt.Status.REJECTED, then=2),
+                output_field=IntegerField(),
+            )
+        )
+    receipts = receipts.order_by(*sort_fields[sort])
+    sort_headers = {}
+    for name in ("purchase", "status", "amount", "registered"):
+        ascending = f"{name}_asc"
+        descending = f"{name}_desc"
+        sort_headers[name] = {
+            "url": f"?sort={descending if sort == ascending else ascending}",
+            "active": sort in (ascending, descending),
+            "arrow": "↑" if sort == ascending else "↓" if sort == descending else "↕",
+        }
 
     paginator = Paginator(receipts, 10)
 
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
+    page_prefix = f"?sort={sort}&" if sort != "registered_desc" else "?"
 
     return render(
         request,
         "receipts/list.html",
-        {"page": page},
+        {
+            "page": page,
+            "sort_headers": sort_headers,
+            "page_prefix": page_prefix,
+        },
     )
+
+
+@login_required
+@require_GET
+def receipt_qr(request, receipt_id):
+    if request.user.has_perm("receipts.view_receipt") or request.user.has_perm(
+        "receipts.change_receipt"
+    ):
+        receipt = get_object_or_404(Receipt, pk=receipt_id)
+    else:
+        receipt = get_object_or_404(Receipt, pk=receipt_id, user=request.user)
+    response = HttpResponse(receipt_qr_svg(receipt), content_type="image/svg+xml")
+    response["Cache-Control"] = "private, max-age=3600"
+    return response
 
 
 def register(request):

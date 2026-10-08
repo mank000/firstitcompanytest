@@ -14,19 +14,25 @@
             <table class="receipt-table">
                 <thead>
                     <tr>
-                        <th>Дата покупки</th>
-                        <th>Статус</th>
-                        <th>Сумма чека</th>
-                        <th>Дата регистрации</th>
+                        <th>QR-код</th>
+                        <th><a class="sort-link{% if sort_headers.purchase.active %} active{% endif %}" href="{{ sort_headers.purchase.url }}">Дата покупки <span aria-hidden="true">{{ sort_headers.purchase.arrow }}</span></a></th>
+                        <th><a class="sort-link{% if sort_headers.status.active %} active{% endif %}" href="{{ sort_headers.status.url }}">Статус <span aria-hidden="true">{{ sort_headers.status.arrow }}</span></a></th>
+                        <th><a class="sort-link{% if sort_headers.amount.active %} active{% endif %}" href="{{ sort_headers.amount.url }}">Сумма чека <span aria-hidden="true">{{ sort_headers.amount.arrow }}</span></a></th>
+                        <th><a class="sort-link{% if sort_headers.registered.active %} active{% endif %}" href="{{ sort_headers.registered.url }}">Дата регистрации <span aria-hidden="true">{{ sort_headers.registered.arrow }}</span></a></th>
                         <th>Информация</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for receipt in page %}
                         <tr>
+                            <td data-label="QR-код">
+                                <a href="{% url 'receipts:qr' receipt.pk %}" target="_blank" rel="noopener" title="Открыть QR-код из данных чека">
+                                    <img class="receipt-qr" src="{% url 'receipts:qr' receipt.pk %}" alt="QR-код чека {{ receipt.pk }}" loading="lazy">
+                                </a>
+                            </td>
                             <td data-label="Дата покупки">{{ receipt.purchase_time|time:"H:i" }} {{ receipt.purchase_date|date:"d.m.Y" }}</td>
                             <td data-label="Статус"><span class="status status-{{ receipt.status }}">{{ receipt.get_status_display }}</span></td>
-                            <td data-label="Сумма чека">{{ receipt.amount }} ₽</td>
+                            <td data-label="Сумма чека">{{ receipt.amount }} руб</td>
                             <td data-label="Дата регистрации">{{ receipt.created_at|date:"H:i d.m.Y" }}</td>
                             <td data-label="Информация">
                                 {% if receipt.rejection_reason %}{{ receipt.rejection_reason }}{% elif receipt.status == "pending" %}Чек на проверке{% else %}Чек принят{% endif %}
@@ -39,9 +45,9 @@
 
         {% if page.paginator.num_pages > 1 %}
             <nav class="pagination" aria-label="Страницы чеков">
-                {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">← Назад</a>{% endif %}
+                {% if page.has_previous %}<a href="{{ page_prefix }}page={{ page.previous_page_number }}">← Назад</a>{% endif %}
                 <span>Страница {{ page.number }} из {{ page.paginator.num_pages }}</span>
-                {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Вперёд →</a>{% endif %}
+                {% if page.has_next %}<a href="{{ page_prefix }}page={{ page.next_page_number }}">Вперёд →</a>{% endif %}
             </nav>
         {% endif %}
         <div class="history-footer">
