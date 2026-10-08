@@ -1,0 +1,39 @@
+#changelist .results table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+#changelist .results th,
+#changelist .results td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+#changelist .results .action-checkbox-column {
+    width: 38px;
+}
+
+#changelist .results .column-receipt_details {
+    width: 24%;
+}
+
+#changelist .results .column-qr_preview {
+    width: 75px;
+}
+
+.admin-receipt-qr {
+    display: block;
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+}
+
+#changelist .results .column-review_actions {
+    width: 170px;
+}
+
+#changelist .results .field-review_actions .button {
+    display: inline-block;
+    margin: 2px 2px 2px 0;
+    white-space: nowrap;
+}
