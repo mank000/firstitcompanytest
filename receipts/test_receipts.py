@@ -1,10 +1,9 @@
-from datetime import date
+from datetime import date, time
 from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-from django.utils import timezone
 
 from .admin import ReceiptAdminForm
 from .models import Receipt
@@ -25,7 +24,8 @@ class ReceiptTests(TestCase):
             "fn": "123456",
             "fd": "321",
             "fp": "987",
-            "purchase_at": "2026-10-15T12:00",
+            "purchase_date": "2026-10-15",
+            "purchase_time": "12:00",
             "amount": "1000.00",
         }
         values.update(changes)
@@ -47,15 +47,15 @@ class ReceiptTests(TestCase):
         self.assertEqual(receipt.user, self.user)
 
     def test_promo_dates(self):
-        for value in ("2026-09-30T23:59", "2026-11-01T00:00"):
+        for value in ("2026-09-30", "2026-11-01"):
             with self.subTest(value=value):
-                response = self.create(purchase_at=value)
+                response = self.create(purchase_date=value)
                 self.assertEqual(response.status_code, 400)
-                self.assertIn("purchase_at", response.json()["errors"])
+                self.assertIn("purchase_date", response.json()["errors"])
 
-        for index, value in enumerate(("2026-10-01T00:00", "2026-10-31T23:59")):
-            with self.subTest(value=value):
-                response = self.create(fn=f"12345{index}", purchase_at=value)
+        for index, (day, hour) in enumerate((("2026-10-01", "00:00"), ("2026-10-31", "23:59"))):
+            with self.subTest(day=day, hour=hour):
+                response = self.create(fn=f"12345{index}", purchase_date=day, purchase_time=hour)
                 self.assertEqual(response.status_code, 201)
 
     def test_receipt_numbers_are_digits(self):
@@ -64,6 +64,23 @@ class ReceiptTests(TestCase):
                 response = self.create(**{field: "12a"})
                 self.assertEqual(response.status_code, 400)
                 self.assertIn(field, response.json()["errors"])
+
+    def test_purchase_date_and_time_stay_as_printed(self):
+        response = self.create(purchase_date="2026-10-01", purchase_time="00:00")
+        self.assertEqual(response.status_code, 201)
+        receipt = Receipt.objects.get()
+        self.assertEqual(receipt.purchase_date, date(2026, 10, 1))
+        self.assertEqual(receipt.purchase_time, time(0, 0))
+
+        page = self.client.get(reverse("receipts:list"))
+        self.assertContains(page, "00:00 01.10.2026")
+        api = self.client.get(reverse("receipts:api")).json()
+        self.assertEqual(api[0]["purchase_date"], "2026-10-01")
+        self.assertEqual(api[0]["purchase_time"], "00:00")
+
+        response = self.create(fn="123457", purchase_date="2026-09-30", purchase_time="23:59")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("purchase_date", response.json()["errors"])
 
     def test_duplicate_receipt_is_rejected(self):
         self.assertEqual(self.create().status_code, 201)
@@ -144,6 +161,7 @@ class ReceiptTests(TestCase):
             "fn": fn,
             "fd": "321",
             "fp": "987",
-            "purchase_at": timezone.now(),
+            "purchase_date": date(2026, 10, 15),
+            "purchase_time": time(12, 0),
             "amount": Decimal("1000.00"),
         }

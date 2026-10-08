@@ -87,6 +87,7 @@ h1 { font-size: 26px; letter-spacing: -.02em; }
 .field input:focus, .auth-card input:focus { border-color: #514bef; }
 .field input.invalid { border-color: #ff626b; }
 .field-error { margin: 4px 0 0; color: #e94651; font-size: 12px; }
+.field-hint { margin: 5px 0 0; color: #75819a; font-size: 11px; line-height: 1.35; }
 .field-error:empty { display: none; }
 .form-card .button { width: 100%; margin-top: 7px; }
 .form-message { margin: 12px 0; padding: 10px; border-radius: 8px; font-size: 13px; }

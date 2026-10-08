@@ -2,7 +2,7 @@ const form = document.querySelector("#receipt-form");
 
 if (form) {
     const formError = document.querySelector("#form-error");
-    const fields = ["fn", "fd", "fp", "purchase_at", "amount"];
+    const fields = ["fn", "fd", "fp", "purchase_date", "purchase_time", "amount"];
 
     function setError(name, message) {
         const input = form.elements[name];
@@ -20,14 +20,13 @@ if (form) {
         formError.hidden = true;
     }
 
-    function validDateTime(value) {
-        const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+    function validDate(value) {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
         if (!match) return false;
-        const [, year, month, day, hour, minute] = match.map(Number);
-        const date = new Date(year, month - 1, day, hour, minute);
-        return date.getFullYear() === year && date.getMonth() === month - 1 &&
-            date.getDate() === day && date.getHours() === hour &&
-            date.getMinutes() === minute;
+        const [, year, month, day] = match.map(Number);
+        const date = new Date(Date.UTC(year, month - 1, day));
+        return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 &&
+            date.getUTCDate() === day;
     }
 
     function validate() {
@@ -40,9 +39,13 @@ if (form) {
             }
         }
 
-        const purchaseAt = form.elements.purchase_at.value;
-        if (!validDateTime(purchaseAt)) {
-            setError("purchase_at", "Укажите корректные дату и время покупки.");
+        if (!validDate(form.elements.purchase_date.value)) {
+            setError("purchase_date", "Укажите корректную дату покупки.");
+            valid = false;
+        }
+
+        if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.elements.purchase_time.value)) {
+            setError("purchase_time", "Укажите корректное время покупки.");
             valid = false;
         }
 

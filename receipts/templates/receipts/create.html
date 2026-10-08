@@ -17,6 +17,7 @@
                 <div class="field">
                     <label for="{{ field.id_for_label }}">{% if field.name == "fd" %}Номер чека (ФД){% else %}{{ field.label }}{% endif %}</label>
                     {{ field }}
+                    {% if field.name == "purchase_time" %}<p class="field-hint">Укажите дату и время как на чеке.</p>{% endif %}
                     <p class="field-error" id="error-{{ field.name }}" data-error-for="{{ field.name }}" aria-live="polite"></p>
                 </div>
             {% endfor %}

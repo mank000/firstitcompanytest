@@ -24,7 +24,7 @@
                 <tbody>
                     {% for receipt in page %}
                         <tr>
-                            <td data-label="Дата покупки">{{ receipt.purchase_at|date:"H:i d.m.Y" }}</td>
+                            <td data-label="Дата покупки">{{ receipt.purchase_time|time:"H:i" }} {{ receipt.purchase_date|date:"d.m.Y" }}</td>
                             <td data-label="Статус"><span class="status status-{{ receipt.status }}">{{ receipt.get_status_display }}</span></td>
                             <td data-label="Сумма чека">{{ receipt.amount }} ₽</td>
                             <td data-label="Дата регистрации">{{ receipt.created_at|date:"H:i d.m.Y" }}</td>

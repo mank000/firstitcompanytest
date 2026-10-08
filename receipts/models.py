@@ -12,7 +12,8 @@ class Receipt(models.Model):
     fd = models.CharField("ФД", max_length=32)
     fp = models.CharField("ФП", max_length=32)
 
-    purchase_at = models.DateTimeField("Дата и время покупки")
+    purchase_date = models.DateField("Дата покупки")
+    purchase_time = models.TimeField("Время покупки")
     amount = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
 
     status = models.CharField(
