@@ -116,6 +116,8 @@ def receipt_list(request):
             "ellipsis": paginator.ELLIPSIS,
             "sort_headers": sort_headers,
             "page_prefix": page_prefix,
+            "promo_start": settings.PROMO_START_DATE,
+            "promo_end": settings.PROMO_END_DATE,
         },
     )
 
@@ -142,9 +144,7 @@ def profile(request):
 @login_required
 @require_GET
 def receipt_qr(request, receipt_id):
-    if request.user.has_perm("receipts.view_receipt") or request.user.has_perm(
-        "receipts.change_receipt"
-    ):
+    if request.user.is_active and request.user.is_staff:
         receipt = get_object_or_404(Receipt, pk=receipt_id)
     else:
         receipt = get_object_or_404(Receipt, pk=receipt_id, user=request.user)
@@ -156,9 +156,7 @@ def receipt_qr(request, receipt_id):
 @login_required
 @require_GET
 def receipt_photo(request, receipt_id):
-    if request.user.has_perm("receipts.view_receipt") or request.user.has_perm(
-        "receipts.change_receipt"
-    ):
+    if request.user.is_active and request.user.is_staff:
         receipt = get_object_or_404(Receipt, pk=receipt_id)
     else:
         receipt = get_object_or_404(Receipt, pk=receipt_id, user=request.user)

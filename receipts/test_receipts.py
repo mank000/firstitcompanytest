@@ -5,7 +5,7 @@ from datetime import date, datetime, time
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -54,6 +54,10 @@ class ReceiptTests(TestCase):
         self.assertEqual(receipt.user, self.user)
 
     def test_promo_dates(self):
+        period = "Период акции: с 01.10.2026 по 31.10.2026 включительно."
+        self.assertContains(self.client.get(reverse("receipts:create")), period)
+        self.assertContains(self.client.get(reverse("receipts:list")), period)
+
         for value in ("2026-09-30", "2026-11-01"):
             with self.subTest(value=value):
                 response = self.create(purchase_date=value)
@@ -175,7 +179,7 @@ class ReceiptTests(TestCase):
         self.assertEqual(self.client.get(url).status_code, 404)
 
         moderator = User.objects.create_user(username="staff", is_staff=True)
-        moderator.user_permissions.add(Permission.objects.get(codename="change_receipt"))
+        self.assertFalse(moderator.has_perm("receipts.view_receipt"))
         self.client.force_login(moderator)
         self.assertEqual(self.client.get(url).status_code, 200)
 
@@ -262,6 +266,9 @@ class ReceiptTests(TestCase):
             self.assertEqual(self.client.get(photo_url).status_code, 200)
             self.client.force_login(self.other)
             self.assertEqual(self.client.get(photo_url).status_code, 404)
+            moderator = User.objects.create_user(username="photo_staff", is_staff=True)
+            self.client.force_login(moderator)
+            self.assertEqual(self.client.get(photo_url).status_code, 200)
 
     def test_login_is_required(self):
         self.client.logout()
@@ -290,15 +297,25 @@ class ReceiptTests(TestCase):
         accept_url = reverse("admin:receipts_receipt_review", args=[receipt.pk, "accept"])
 
         self.assertEqual(self.client.get(reject_url).status_code, 302)
-        moderator = User.objects.create_superuser(
-            username="moderator", password="test-password-123"
+        moderator = User.objects.create_user(
+            username="moderator", password="test-password-123", is_staff=True
         )
+        self.assertFalse(moderator.has_perm("receipts.change_receipt"))
         self.client.force_login(moderator)
 
         changelist = self.client.get(reverse("admin:receipts_receipt_changelist"))
         self.assertContains(changelist, "QR-код")
         self.assertContains(changelist, "Принять")
         self.assertContains(changelist, "Отклонить")
+        self.assertEqual(
+            self.client.get(
+                reverse("admin:receipts_receipt_change", args=[receipt.pk])
+            ).status_code,
+            200,
+        )
+        self.assertEqual(
+            self.client.get(reverse("admin:receipts_receipt_export_csv")).status_code, 200
+        )
 
         self.assertEqual(self.client.get(reject_url).status_code, 200)
         receipt.refresh_from_db()

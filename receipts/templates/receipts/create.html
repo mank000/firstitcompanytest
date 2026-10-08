@@ -9,10 +9,17 @@
         <a class="close-link" href="{% url 'receipts:list' %}" aria-label="Вернуться к моим чекам">×</a>
         <h1 id="form-title">Регистрация чека</h1>
         <p class="form-intro">Введите необходимые данные с чека</p>
+        <p class="promo-period">Период акции: с {{ promo_start|date:"d.m.Y" }} по {{ promo_end|date:"d.m.Y" }} включительно.</p>
 
         <form method="post" id="receipt-form" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
             <div class="qr-scan">
+                <div class="field">
+                    <label for="qr-text">Вставить строку из QR-кода</label>
+                    <input type="text" id="qr-text" placeholder="t=...&s=...&fn=...&i=...&fp=..." autocomplete="off">
+                    <p class="field-error" id="qr-text-error" aria-live="polite"></p>
+                </div>
+                <button class="scan-button qr-fill-button" id="fill-qr" type="button">Заполнить поля из строки</button>
                 <button class="scan-button" id="scan-qr" type="button">Сканировать QR-код чека</button>
                 <div class="scan-panel" id="scan-panel" hidden>
                     <video id="scan-video" aria-label="Изображение с камеры" autoplay muted playsinline></video>
@@ -53,5 +60,5 @@
     </div>
 </section>
 <script src="{% static 'receipts/form.js' %}?v=5" defer></script>
-<script src="{% static 'receipts/scanner.js' %}?v=3" defer></script>
+<script src="{% static 'receipts/scanner.js' %}?v=4" defer></script>
 {% endblock %}

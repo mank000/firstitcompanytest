@@ -58,6 +58,15 @@ class ReceiptAdmin(admin.ModelAdmin):
     list_select_related = ("user",)
     ordering = ("-created_at",)
 
+    def has_module_permission(self, request):
+        return request.user.is_active and request.user.is_staff
+
+    def has_view_permission(self, request, obj=None):
+        return self.has_module_permission(request)
+
+    def has_change_permission(self, request, obj=None):
+        return self.has_module_permission(request)
+
     @admin.display(description="Фото чека")
     def photo_preview(self, obj):
         if not obj or not obj.photo:

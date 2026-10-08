@@ -38,6 +38,8 @@ const scanButton = document.querySelector("#scan-qr");
 
 if (scanButton) {
     const scanForm = document.querySelector("#receipt-form");
+    const qrInput = document.querySelector("#qr-text");
+    const qrError = document.querySelector("#qr-text-error");
     const panel = document.querySelector("#scan-panel");
     const video = document.querySelector("#scan-video");
     const message = document.querySelector("#scan-message");
@@ -50,6 +52,15 @@ if (scanButton) {
         message.hidden = !text;
     }
 
+    function setQrError(text) {
+        qrError.textContent = text;
+        qrInput.classList.toggle("invalid", Boolean(text));
+        qrInput.closest(".field").classList.toggle("has-error", Boolean(text));
+        qrInput.setAttribute("aria-invalid", String(Boolean(text)));
+        if (text) qrInput.setAttribute("aria-describedby", qrError.id);
+        else qrInput.removeAttribute("aria-describedby");
+    }
+
     function stopScanner() {
         requestId += 1;
         if (stream) stream.getTracks().forEach((track) => track.stop());
@@ -60,6 +71,7 @@ if (scanButton) {
     }
 
     function fillForm(values) {
+        setQrError("");
         const fields = {
             ...values,
             purchase_datetime: `${values.purchase_date}T${values.purchase_time}`,
@@ -102,6 +114,17 @@ if (scanButton) {
         }
         requestAnimationFrame(() => readFrame(scanId));
     }
+
+    document.querySelector("#fill-qr").addEventListener("click", () => {
+        showMessage("");
+        try {
+            fillForm(parseReceiptQr(qrInput.value.trim()));
+            showMessage("Данные чека заполнены. Проверьте их и отправьте форму.");
+        } catch (error) {
+            setQrError(error.message);
+        }
+    });
+    qrInput.addEventListener("input", () => setQrError(""));
 
     scanButton.addEventListener("click", async () => {
         showMessage("");

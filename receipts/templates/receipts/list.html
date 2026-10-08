@@ -9,6 +9,7 @@
         <h1>История чеков</h1>
         <span class="receipt-count">Чеков внесено: <strong>{{ page.paginator.count }} шт.</strong></span>
     </div>
+    <p class="history-promo">Период акции: с {{ promo_start|date:"d.m.Y" }} по {{ promo_end|date:"d.m.Y" }} включительно.</p>
 
     {% if page %}
         <div class="table-scroll">
