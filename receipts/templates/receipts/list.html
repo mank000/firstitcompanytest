@@ -12,7 +12,7 @@
 
     {% if page %}
         <div class="table-scroll">
-            <table class="receipt-table">
+            <table class="receipt-table" data-status-url="{% url 'receipts:api' %}">
                 <thead>
                     <tr>
                         <th>QR-код</th>
@@ -25,7 +25,7 @@
                 </thead>
                 <tbody>
                     {% for receipt in page %}
-                        <tr>
+                        <tr data-receipt-id="{{ receipt.pk }}">
                             <td data-label="QR-код">
                                 <a href="{% url 'receipts:qr' receipt.pk %}" target="_blank" rel="noopener" title="Открыть QR-код из данных чека">
                                     <img class="receipt-qr" src="{% url 'receipts:qr' receipt.pk %}" alt="QR-код чека {{ receipt.pk }}" loading="lazy">
@@ -36,7 +36,8 @@
                             <td data-label="Сумма чека">{{ receipt.amount }} руб</td>
                             <td data-label="Дата регистрации">{{ receipt.created_at|date:"H:i d.m.Y" }}</td>
                             <td data-label="Информация">
-                                {% if receipt.rejection_reason %}{{ receipt.rejection_reason }}{% elif receipt.status == "pending" %}Чек на проверке{% else %}Чек принят{% endif %}
+                                <span class="receipt-info-text">{% if receipt.rejection_reason %}{{ receipt.rejection_reason }}{% elif receipt.status == "pending" %}Чек на проверке{% else %}Чек принят{% endif %}</span>
+                                {% if receipt.photo %}<a class="receipt-photo-link" href="{% url 'receipts:photo' receipt.pk %}" target="_blank" rel="noopener">Фото чека</a>{% endif %}
                             </td>
                         </tr>
                     {% endfor %}
@@ -69,7 +70,10 @@
         {% endif %}
         <div class="history-footer">
             <p class="hint">Иногда проверка чека может занять до 5 рабочих дней</p>
-            <a class="button" href="{% url 'receipts:create' %}">Зарегистрировать чек</a>
+            <div class="history-actions">
+                <a class="button button-secondary" href="{% url 'receipts:export_csv' %}">Скачать принятые чеки (CSV)</a>
+                <a class="button" href="{% url 'receipts:create' %}">Зарегистрировать чек</a>
+            </div>
         </div>
     {% else %}
         <div class="empty-state">
@@ -80,4 +84,5 @@
         </div>
     {% endif %}
 </section>
+<script src="{% static 'receipts/status.js' %}?v=1" defer></script>
 {% endblock %}

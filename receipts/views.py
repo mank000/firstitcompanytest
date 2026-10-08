@@ -1,3 +1,5 @@
+import csv
+
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -5,8 +7,9 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import Case, IntegerField, When
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods
 
@@ -19,7 +22,7 @@ from .qr import receipt_qr_svg
 @require_http_methods(["GET", "POST"])
 def create_receipt(request):
     if request.method == "POST":
-        form = ReceiptForm(request.POST)
+        form = ReceiptForm(request.POST, request.FILES)
 
         if form.is_valid():
             receipt = form.save(commit=False)
@@ -150,6 +153,61 @@ def receipt_qr(request, receipt_id):
     return response
 
 
+@login_required
+@require_GET
+def receipt_photo(request, receipt_id):
+    if request.user.has_perm("receipts.view_receipt") or request.user.has_perm(
+        "receipts.change_receipt"
+    ):
+        receipt = get_object_or_404(Receipt, pk=receipt_id)
+    else:
+        receipt = get_object_or_404(Receipt, pk=receipt_id, user=request.user)
+    if not receipt.photo:
+        raise Http404
+    content_type = "image/png" if receipt.photo.name.lower().endswith(".png") else "image/jpeg"
+    response = FileResponse(receipt.photo.open("rb"), content_type=content_type)
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
+def accepted_csv_response(receipts, include_user=False):
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="accepted_receipts.csv"'
+    response.write("\ufeff")
+    writer = csv.writer(response)
+    columns = ["ID", "ФН", "ФД", "ФП", "Дата покупки", "Время покупки", "Сумма", "Дата регистрации"]
+    if include_user:
+        columns.append("Пользователь")
+    writer.writerow(columns)
+    for receipt in receipts:
+        row = [
+            receipt.pk,
+            receipt.fn,
+            receipt.fd,
+            receipt.fp,
+            receipt.purchase_date.strftime("%d.%m.%Y"),
+            receipt.purchase_time.strftime("%H:%M"),
+            str(receipt.amount),
+            timezone.localtime(receipt.created_at).strftime("%d.%m.%Y %H:%M"),
+        ]
+        if include_user:
+            username = receipt.user.username
+            row.append(
+                f"'{username}" if username.lstrip().startswith(("=", "+", "-", "@")) else username
+            )
+        writer.writerow(row)
+    return response
+
+
+@login_required
+@require_GET
+def export_csv(request):
+    receipts = Receipt.objects.filter(user=request.user, status=Receipt.Status.ACCEPTED).order_by(
+        "-created_at", "-pk"
+    )
+    return accepted_csv_response(receipts)
+
+
 def register(request):
     if request.user.is_authenticated:
         return redirect("receipts:list")
@@ -184,9 +242,7 @@ def receipt_api(request):
             json_dumps_params={"ensure_ascii": False},
         )
 
-    receipts = Receipt.objects.filter(user=request.user).order_by(
-        "-created_at", "-pk"
-    )
+    receipts = Receipt.objects.filter(user=request.user).order_by("-created_at", "-pk")
 
     data = [
         {

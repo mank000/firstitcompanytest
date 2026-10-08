@@ -1,10 +1,15 @@
+import csv
+import io
+import tempfile
 from datetime import date, datetime, time
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from django.contrib.auth.models import Permission, User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from PIL import Image
 
 from .admin import ReceiptAdminForm
 from .models import Receipt
@@ -196,6 +201,64 @@ class ReceiptTests(TestCase):
                     getattr(strict_client, method.__name__)(reverse("receipts:api")).status_code,
                     405,
                 )
+
+    def test_csv_contains_only_own_accepted_receipts(self):
+        own = Receipt.objects.create(
+            user=self.user, status=Receipt.Status.ACCEPTED, **self.receipt_values(fn="111")
+        )
+        Receipt.objects.create(user=self.user, **self.receipt_values(fn="222"))
+        Receipt.objects.create(
+            user=self.other, status=Receipt.Status.ACCEPTED, **self.receipt_values(fn="333")
+        )
+        response = self.client.get(reverse("receipts:export_csv"))
+        self.assertEqual(response.status_code, 200)
+        rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig"))))
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[1][0], str(own.pk))
+
+        moderator = User.objects.create_superuser(username="moderator", password="test-pass")
+        self.client.force_login(moderator)
+        response = self.client.get(reverse("admin:receipts_receipt_export_csv"))
+        rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig"))))
+        self.assertEqual(len(rows), 3)
+        self.assertIn("Пользователь", rows[0])
+
+        user_page = self.client.get(reverse("admin:auth_user_change", args=[self.user.pk]))
+        self.assertContains(user_page, "Скачать CSV")
+        response = self.client.get(
+            reverse("admin:receipts_receipt_export_user_csv", args=[self.user.pk])
+        )
+        rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig"))))
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[1][0], str(own.pk))
+
+    def test_optional_photo_validation_and_private_access(self):
+        def image_file(format_name, name):
+            image = Image.new("RGB", (2, 2), "white")
+            buffer = io.BytesIO()
+            image.save(buffer, format=format_name)
+            return SimpleUploadedFile(name, buffer.getvalue(), content_type="image/png")
+
+        with tempfile.TemporaryDirectory() as media_root, self.settings(MEDIA_ROOT=media_root):
+            response = self.create(photo=image_file("GIF", "check.gif"))
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("photo", response.json()["errors"])
+
+            photo = image_file("PNG", "check.png")
+            oversized = SimpleUploadedFile(
+                "large.png", photo.read() + b"\0" * (5 * 1024 * 1024), content_type="image/png"
+            )
+            response = self.create(photo=oversized)
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("photo", response.json()["errors"])
+
+            response = self.create(photo=image_file("PNG", "check.png"))
+            self.assertEqual(response.status_code, 201)
+            receipt = Receipt.objects.get()
+            photo_url = reverse("receipts:photo", args=[receipt.pk])
+            self.assertEqual(self.client.get(photo_url).status_code, 200)
+            self.client.force_login(self.other)
+            self.assertEqual(self.client.get(photo_url).status_code, 404)
 
     def test_login_is_required(self):
         self.client.logout()

@@ -87,6 +87,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 PROMO_START_DATE = date.fromisoformat(os.environ["PROMO_START_DATE"])
 

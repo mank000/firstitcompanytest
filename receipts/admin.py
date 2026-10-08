@@ -1,11 +1,14 @@
 from django import forms
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
 from django.http import Http404, HttpResponseNotAllowed
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path, reverse
 from django.utils.html import format_html
 
 from .models import Receipt
+from .views import accepted_csv_response
 
 
 class ReceiptAdminForm(forms.ModelForm):
@@ -32,10 +35,14 @@ class RejectionForm(forms.Form):
 
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
+    change_list_template = "admin/receipts/receipt/change_list.html"
+
     class Media:
         css = {"all": ("receipts/admin.css",)}
 
     form = ReceiptAdminForm
+    exclude = ("photo",)
+    readonly_fields = ("photo_preview",)
     list_display = (
         "qr_preview",
         "receipt_details",
@@ -50,6 +57,13 @@ class ReceiptAdmin(admin.ModelAdmin):
     search_fields = ("fn", "fd", "fp", "user__username")
     list_select_related = ("user",)
     ordering = ("-created_at",)
+
+    @admin.display(description="Фото чека")
+    def photo_preview(self, obj):
+        if not obj or not obj.photo:
+            return "Фото не загружено"
+        url = reverse("receipts:photo", args=[obj.pk])
+        return format_html('<a href="{}" target="_blank" rel="noopener">Открыть фото</a>', url)
 
     @admin.display(description="QR-код")
     def qr_preview(self, obj):
@@ -79,20 +93,48 @@ class ReceiptAdmin(admin.ModelAdmin):
         accept_url = reverse("admin:receipts_receipt_review", args=[obj.pk, "accept"])
         reject_url = reverse("admin:receipts_receipt_review", args=[obj.pk, "reject"])
         return format_html(
-            '<a class="button" href="{}">Принять</a> '
-            '<a class="button" href="{}">Отклонить</a>',
+            '<a class="button" href="{}">Принять</a> <a class="button" href="{}">Отклонить</a>',
             accept_url,
             reject_url,
         )
 
     def get_urls(self):
         urls = super().get_urls()
+        export_url = path(
+            "export/",
+            self.admin_site.admin_view(self.export_csv),
+            name="receipts_receipt_export_csv",
+        )
+        user_export_url = path(
+            "export/user/<int:user_id>/",
+            self.admin_site.admin_view(self.export_user_csv),
+            name="receipts_receipt_export_user_csv",
+        )
         review_url = path(
             "<int:receipt_id>/review/<str:decision>/",
             self.admin_site.admin_view(self.review_view),
             name="receipts_receipt_review",
         )
-        return [review_url, *urls]
+        return [export_url, user_export_url, review_url, *urls]
+
+    def export_csv(self, request):
+        if not self.has_view_permission(request):
+            raise Http404
+        receipts = (
+            Receipt.objects.filter(status=Receipt.Status.ACCEPTED)
+            .select_related("user")
+            .order_by("-created_at", "-pk")
+        )
+        return accepted_csv_response(receipts, include_user=True)
+
+    def export_user_csv(self, request, user_id):
+        if not self.has_view_permission(request):
+            raise Http404
+        user = get_object_or_404(User, pk=user_id)
+        receipts = Receipt.objects.filter(user=user, status=Receipt.Status.ACCEPTED).order_by(
+            "-created_at", "-pk"
+        )
+        return accepted_csv_response(receipts)
 
     def review_view(self, request, receipt_id, decision):
         if request.method not in ("GET", "POST"):
@@ -129,3 +171,22 @@ class ReceiptAdmin(admin.ModelAdmin):
             "changelist_url": reverse("admin:receipts_receipt_changelist"),
         }
         return render(request, "admin/receipts/receipt/review.html", context)
+
+
+admin.site.unregister(User)
+
+
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    readonly_fields = (*BaseUserAdmin.readonly_fields, "accepted_receipts_csv")
+    fieldsets = (
+        *BaseUserAdmin.fieldsets,
+        ("Чеки", {"fields": ("accepted_receipts_csv",)}),
+    )
+
+    @admin.display(description="Принятые чеки")
+    def accepted_receipts_csv(self, obj):
+        if not obj or not obj.pk:
+            return "Сохраните пользователя, чтобы скачать чеки"
+        url = reverse("admin:receipts_receipt_export_user_csv", args=[obj.pk])
+        return format_html('<a href="{}">Скачать CSV</a>', url)

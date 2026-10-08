@@ -2,7 +2,7 @@ const form = document.querySelector("#receipt-form");
 
 if (form) {
     const formError = document.querySelector("#form-error");
-    const fields = ["fn", "fd", "fp", "purchase_datetime", "amount"];
+    const fields = ["fn", "fd", "fp", "purchase_datetime", "amount", "photo"];
 
     function setError(name, message) {
         const input = form.elements[name];
@@ -51,6 +51,14 @@ if (form) {
         const number = Number(amount);
         if (!amount || !Number.isFinite(number) || number < 1000) {
             setError("amount", "Сумма должна быть числом не меньше 1000 ₽.");
+            valid = false;
+        }
+        const photo = form.elements.photo.files[0];
+        if (photo && !["image/jpeg", "image/png"].includes(photo.type)) {
+            setError("photo", "Загрузите фото в формате JPG или PNG.");
+            valid = false;
+        } else if (photo && photo.size > 5 * 1024 * 1024) {
+            setError("photo", "Размер фото не должен превышать 5 МБ.");
             valid = false;
         }
         return valid;

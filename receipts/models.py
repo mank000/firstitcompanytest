@@ -15,6 +15,7 @@ class Receipt(models.Model):
     purchase_date = models.DateField("Дата покупки")
     purchase_time = models.TimeField("Время покупки")
     amount = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
+    photo = models.ImageField("Фото чека", upload_to="receipts/%Y/%m/", blank=True)
 
     status = models.CharField(
         "Статус",

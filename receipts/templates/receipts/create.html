@@ -10,7 +10,7 @@
         <h1 id="form-title">Регистрация чека</h1>
         <p class="form-intro">Введите необходимые данные с чека</p>
 
-        <form method="post" id="receipt-form" novalidate>
+        <form method="post" id="receipt-form" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
             <div class="qr-scan">
                 <button class="scan-button" id="scan-qr" type="button">Сканировать QR-код чека</button>
@@ -34,6 +34,7 @@
                     <div class="field">
                         <label for="{{ field.id_for_label }}">{% if field.name == "fd" %}Номер чека (ФД){% else %}{{ field.label }}{% endif %}</label>
                         {{ field }}
+                        {% if field.name == "photo" %}<p class="field-hint">Необязательно. JPG или PNG, до 5 МБ.</p>{% endif %}
                         <p class="field-error" id="error-{{ field.name }}" data-error-for="{{ field.name }}" aria-live="polite"></p>
                     </div>
                 {% endif %}
@@ -51,6 +52,6 @@
         <a class="button" href="{% url 'receipts:list' %}">На главную</a>
     </div>
 </section>
-<script src="{% static 'receipts/form.js' %}?v=4" defer></script>
+<script src="{% static 'receipts/form.js' %}?v=5" defer></script>
 <script src="{% static 'receipts/scanner.js' %}?v=3" defer></script>
 {% endblock %}

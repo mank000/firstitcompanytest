@@ -1,0 +1,6 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+<li><a href="{% url 'admin:receipts_receipt_export_csv' %}">Скачать принятые чеки (CSV)</a></li>
+{{ block.super }}
+{% endblock %}
