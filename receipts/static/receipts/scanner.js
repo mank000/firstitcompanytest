@@ -60,12 +60,17 @@ if (scanButton) {
     }
 
     function fillForm(values) {
-        for (const [name, value] of Object.entries(values)) {
+        const fields = {
+            ...values,
+            purchase_datetime: `${values.purchase_date}T${values.purchase_time}`,
+        };
+        for (const [name, value] of Object.entries(fields)) {
             const input = scanForm.elements[name];
             input.value = value;
             input.classList.remove("invalid");
             input.setAttribute("aria-invalid", "false");
-            document.querySelector(`[data-error-for="${name}"]`).textContent = "";
+            const error = document.querySelector(`[data-error-for="${name}"]`);
+            if (error) error.textContent = "";
         }
         const formError = document.querySelector("#form-error");
         formError.textContent = "";

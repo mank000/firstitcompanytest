@@ -2,7 +2,7 @@ const form = document.querySelector("#receipt-form");
 
 if (form) {
     const formError = document.querySelector("#form-error");
-    const fields = ["fn", "fd", "fp", "purchase_date", "purchase_time", "amount"];
+    const fields = ["fn", "fd", "fp", "purchase_datetime", "amount"];
 
     function setError(name, message) {
         const input = form.elements[name];
@@ -20,8 +20,8 @@ if (form) {
         formError.hidden = true;
     }
 
-    function validDate(value) {
-        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    function validDateTime(value) {
+        const match = /^(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d)$/.exec(value);
         if (!match) return false;
         const [, year, month, day] = match.map(Number);
         const date = new Date(Date.UTC(year, month - 1, day));
@@ -39,13 +39,8 @@ if (form) {
             }
         }
 
-        if (!validDate(form.elements.purchase_date.value)) {
-            setError("purchase_date", "Укажите корректную дату покупки.");
-            valid = false;
-        }
-
-        if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.elements.purchase_time.value)) {
-            setError("purchase_time", "Укажите корректное время покупки.");
+        if (!validDateTime(form.elements.purchase_datetime.value)) {
+            setError("purchase_datetime", "Укажите корректные дату и время покупки.");
             valid = false;
         }
 
@@ -62,6 +57,10 @@ if (form) {
         event.preventDefault();
         clearErrors();
         if (!validate()) return;
+
+        const [purchaseDate, purchaseTime] = form.elements.purchase_datetime.value.split("T");
+        form.elements.purchase_date.value = purchaseDate;
+        form.elements.purchase_time.value = purchaseTime;
 
         const button = form.querySelector('button[type="submit"]');
         button.disabled = true;
@@ -84,6 +83,8 @@ if (form) {
                     if (name === "__all__") {
                         formError.textContent = message;
                         formError.hidden = false;
+                    } else if (name === "purchase_date" || name === "purchase_time") {
+                        setError("purchase_datetime", message);
                     } else {
                         setError(name, message);
                     }

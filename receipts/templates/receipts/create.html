@@ -9,7 +9,6 @@
         <a class="close-link" href="{% url 'receipts:list' %}" aria-label="Вернуться к моим чекам">×</a>
         <h1 id="form-title">Регистрация чека</h1>
         <p class="form-intro">Введите необходимые данные с чека</p>
-        <p class="promo-period">Период акции: {{ promo_start|date:"d.m.Y" }} — {{ promo_end|date:"d.m.Y" }}</p>
 
         <form method="post" id="receipt-form" novalidate>
             {% csrf_token %}
@@ -22,12 +21,22 @@
                 <p class="scan-message" id="scan-message" role="status" aria-live="polite" hidden></p>
             </div>
             {% for field in form %}
-                <div class="field">
-                    <label for="{{ field.id_for_label }}">{% if field.name == "fd" %}Номер чека (ФД){% else %}{{ field.label }}{% endif %}</label>
-                    {{ field }}
-                    {% if field.name == "purchase_time" %}<p class="field-hint">Укажите дату и время как на чеке.</p>{% endif %}
-                    <p class="field-error" id="error-{{ field.name }}" data-error-for="{{ field.name }}" aria-live="polite"></p>
-                </div>
+                {% if field.name == "purchase_date" %}
+                    <div class="field">
+                        <label for="id_purchase_datetime">Дата и время покупки</label>
+                        <input type="datetime-local" id="id_purchase_datetime" name="purchase_datetime" required>
+                        <p class="field-hint">Укажите дату и время как на чеке.</p>
+                        <p class="field-error" id="error-purchase_datetime" data-error-for="purchase_datetime" aria-live="polite"></p>
+                    </div>
+                    {{ form.purchase_date.as_hidden }}
+                    {{ form.purchase_time.as_hidden }}
+                {% elif field.name != "purchase_time" %}
+                    <div class="field">
+                        <label for="{{ field.id_for_label }}">{% if field.name == "fd" %}Номер чека (ФД){% else %}{{ field.label }}{% endif %}</label>
+                        {{ field }}
+                        <p class="field-error" id="error-{{ field.name }}" data-error-for="{{ field.name }}" aria-live="polite"></p>
+                    </div>
+                {% endif %}
             {% endfor %}
 
             <p class="form-message error" id="form-error" role="alert" hidden></p>
@@ -42,6 +51,6 @@
         <a class="button" href="{% url 'receipts:list' %}">На главную</a>
     </div>
 </section>
-<script src="{% static 'receipts/form.js' %}" defer></script>
-<script src="{% static 'receipts/scanner.js' %}" defer></script>
+<script src="{% static 'receipts/form.js' %}?v=2" defer></script>
+<script src="{% static 'receipts/scanner.js' %}?v=2" defer></script>
 {% endblock %}
