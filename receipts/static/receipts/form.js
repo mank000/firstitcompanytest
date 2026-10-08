@@ -50,7 +50,7 @@ if (form) {
         const amount = form.elements.amount.value.trim();
         const number = Number(amount);
         if (!amount || !Number.isFinite(number) || number < 1000) {
-            setError("amount", "Сумма должна быть числом не меньше 1000 ₽.");
+            setError("amount", "Сумма должна быть числом не меньше 1000 руб.");
             valid = false;
         }
         const photo = form.elements.photo.files[0];

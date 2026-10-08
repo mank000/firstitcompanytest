@@ -22,5 +22,5 @@
   <path d="M128 49c12 1 15 11 14 18l-14-1V49Z" fill="#bac7f4"/>
   <path d="M69 65h27m-27 15h45m-45 12h45m-45 12h39m-39 12h43m-43 12h28" stroke="url(#ink)" stroke-width="3" stroke-linecap="round"/>
   <path d="m109 78 4 4 6-7m-10 28 4 4 6-7m-10 28 4 4 6-7" stroke="#a3b4f8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="68" y="59" fill="#a3b4f8" font-family="Arial,sans-serif" font-size="18" font-weight="700">₽</text>
+  <text x="68" y="59" fill="#a3b4f8" font-family="Arial,sans-serif" font-size="18" font-weight="700">руб</text>
 </svg>
