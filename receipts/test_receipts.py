@@ -1,12 +1,14 @@
-from datetime import date, time
+from datetime import date, datetime, time
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from .admin import ReceiptAdminForm
 from .models import Receipt
+from .qr import receipt_qr_text
 
 
 @override_settings(PROMO_START_DATE=date(2026, 10, 1), PROMO_END_DATE=date(2026, 10, 31))
@@ -111,6 +113,64 @@ class ReceiptTests(TestCase):
         second_page = self.client.get(reverse("receipts:list"), {"page": 2})
         self.assertEqual(len(second_page.context["page"]), 1)
 
+    def test_list_sorting_and_pagination(self):
+        for index in range(12):
+            receipt = Receipt.objects.create(
+                user=self.user,
+                status=Receipt.Status.ACCEPTED if index < 11 else Receipt.Status.REJECTED,
+                **self.receipt_values(fn=str(index)),
+            )
+            receipt.purchase_date = date(2026, 10, 1 if index < 11 else 2)
+            receipt.save(update_fields=["purchase_date"])
+            registered_at = datetime(
+                2026, 10, 8 if index < 11 else 9, tzinfo=ZoneInfo("Europe/Moscow")
+            )
+            Receipt.objects.filter(pk=receipt.pk).update(created_at=registered_at)
+        Receipt.objects.create(user=self.other, **self.receipt_values(fn="999"))
+
+        response = self.client.get(reverse("receipts:list"), {"sort": "amount_asc"})
+        self.assertEqual(response.context["page"].paginator.count, 12)
+        self.assertEqual(len(response.context["page"]), 10)
+        self.assertContains(response, "page=2")
+        self.assertContains(response, "sort=amount_asc")
+        amounts = [receipt.amount for receipt in response.context["page"]]
+        self.assertEqual(amounts, sorted(amounts))
+
+        response = self.client.get(reverse("receipts:list"), {"sort": "amount_asc", "page": 2})
+        self.assertEqual(len(response.context["page"]), 2)
+
+        for sort, key, reverse_order in (
+            ("purchase_desc", lambda receipt: (receipt.purchase_date, receipt.purchase_time), True),
+            ("status_desc", lambda receipt: receipt.status == Receipt.Status.REJECTED, True),
+            ("registered_asc", lambda receipt: receipt.created_at, False),
+        ):
+            with self.subTest(sort=sort):
+                response = self.client.get(reverse("receipts:list"), {"sort": sort})
+                receipts = list(response.context["page"].paginator.object_list)
+                values = [key(receipt) for receipt in receipts]
+                self.assertEqual(values, sorted(values, reverse=reverse_order))
+                self.assertTrue(all(receipt.user == self.user for receipt in receipts))
+
+    def test_qr_contains_receipt_data_and_is_private(self):
+        receipt = Receipt.objects.create(user=self.user, **self.receipt_values(fn="888"))
+        self.assertEqual(
+            receipt_qr_text(receipt),
+            "t=20261015T1200&s=1000.00&fn=888&i=321&fp=987",
+        )
+        url = reverse("receipts:qr", args=[receipt.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "image/svg+xml")
+        self.assertIn(b"<svg", response.content)
+
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+        moderator = User.objects.create_user(username="staff", is_staff=True)
+        moderator.user_permissions.add(Permission.objects.get(codename="change_receipt"))
+        self.client.force_login(moderator)
+        self.assertEqual(self.client.get(url).status_code, 200)
+
     def test_api_shows_only_own_receipts(self):
         own = Receipt.objects.create(user=self.user, **self.receipt_values(fn="888"))
         Receipt.objects.create(user=self.other, **self.receipt_values(fn="999"))
@@ -154,6 +214,42 @@ class ReceiptTests(TestCase):
 
         data["rejection_reason"] = "Чек не подходит под условия акции."
         self.assertTrue(ReceiptAdminForm(data=data, instance=receipt).is_valid())
+
+    def test_admin_review_buttons(self):
+        receipt = Receipt.objects.create(user=self.user, **self.receipt_values(fn="888"))
+        reject_url = reverse("admin:receipts_receipt_review", args=[receipt.pk, "reject"])
+        accept_url = reverse("admin:receipts_receipt_review", args=[receipt.pk, "accept"])
+
+        self.assertEqual(self.client.get(reject_url).status_code, 302)
+        moderator = User.objects.create_superuser(
+            username="moderator", password="test-password-123"
+        )
+        self.client.force_login(moderator)
+
+        changelist = self.client.get(reverse("admin:receipts_receipt_changelist"))
+        self.assertContains(changelist, "QR-код")
+        self.assertContains(changelist, "Принять")
+        self.assertContains(changelist, "Отклонить")
+
+        self.assertEqual(self.client.get(reject_url).status_code, 200)
+        receipt.refresh_from_db()
+        self.assertEqual(receipt.status, Receipt.Status.PENDING)
+
+        response = self.client.post(reject_url, {"reason": "  "})
+        self.assertEqual(response.status_code, 200)
+        receipt.refresh_from_db()
+        self.assertEqual(receipt.status, Receipt.Status.PENDING)
+
+        response = self.client.post(reject_url, {"reason": "Неверные данные."})
+        self.assertEqual(response.status_code, 302)
+        receipt.refresh_from_db()
+        self.assertEqual(receipt.status, Receipt.Status.REJECTED)
+        self.assertEqual(receipt.rejection_reason, "Неверные данные.")
+
+        self.assertEqual(self.client.post(accept_url).status_code, 302)
+        receipt.refresh_from_db()
+        self.assertEqual(receipt.status, Receipt.Status.ACCEPTED)
+        self.assertEqual(receipt.rejection_reason, "")
 
     @staticmethod
     def receipt_values(fn):
