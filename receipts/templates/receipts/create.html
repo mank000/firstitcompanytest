@@ -4,7 +4,7 @@
 {% block title %}Регистрация чека{% endblock %}
 
 {% block content %}
-<section class="form-card" aria-labelledby="form-title">
+<section class="form-card" id="form-card" aria-labelledby="form-title">
     <div id="form-content">
         <a class="close-link" href="{% url 'receipts:list' %}" aria-label="Вернуться к моим чекам">×</a>
         <h1 id="form-title">Регистрация чека</h1>
@@ -47,10 +47,10 @@
     <div class="success-panel" id="success-panel" role="status" hidden>
         <span class="success-icon" aria-hidden="true">✓</span>
         <h1>Ваш чек загружен</h1>
-        <p>Мы начали проверять вашу покупку. Статус чека появится в личном кабинете.</p>
+        <p>Мы начали проверять вашу покупку.<br>Статус чека появится в личном кабинете.</p>
         <a class="button" href="{% url 'receipts:list' %}">На главную</a>
     </div>
 </section>
-<script src="{% static 'receipts/form.js' %}?v=3" defer></script>
+<script src="{% static 'receipts/form.js' %}?v=4" defer></script>
 <script src="{% static 'receipts/scanner.js' %}?v=3" defer></script>
 {% endblock %}

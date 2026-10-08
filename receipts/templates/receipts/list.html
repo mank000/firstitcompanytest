@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Мои чеки{% endblock %}
 
@@ -72,7 +73,7 @@
         </div>
     {% else %}
         <div class="empty-state">
-            <div class="empty-icon" aria-hidden="true">▤</div>
+            <img class="empty-illustration" src="{% static 'receipts/empty-receipt.svg' %}" alt="">
             <h2>Здесь будет история ваших чеков</h2>
             <p>Вы не добавили еще ни одного чека</p>
             <a class="button" href="{% url 'receipts:create' %}">Зарегистрировать чек</a>

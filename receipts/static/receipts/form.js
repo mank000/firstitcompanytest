@@ -77,6 +77,7 @@ if (form) {
             if (response.ok) {
                 form.reset();
                 document.querySelector("#form-content").hidden = true;
+                document.querySelector("#form-card").classList.add("is-success");
                 document.querySelector("#success-panel").hidden = false;
                 return;
             }
